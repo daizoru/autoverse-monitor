@@ -39,6 +39,9 @@ module.exports = ->
         src: [
           'components/threejs/build/three.js'
 
+          # CONSTRUCTIVE GEOMETRY
+          'components/ThreeCSG/ThreeCSG.js'
+
           # STATS AND WEBGL DETECTOR
           'components/stats.js/build/stats.min.js'
           'components/threejs/examples/js/Detector.js'
@@ -75,8 +78,11 @@ module.exports = ->
           # PHYSIC ENGINE
           'components/cannon.js/build/cannon.js'
 
+          'public/js/model.js'
+          'public/js/app.js'
+
         ]
-        dest: 'public/js/vendors.js'
+        dest: 'public/js/autoverse.js'
 
 
     uglify:
@@ -87,7 +93,7 @@ module.exports = ->
     watch:
       coffee:
         files: [ 'src/**/*.coffee' ]
-        tasks: [ 'coffee' ]
+        tasks: [ 'build' ]
         options: debounceDelay: 250
 
     bgShell:

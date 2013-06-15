@@ -3,6 +3,7 @@
     "threejs": "latest",
     "stats.js": "latest",
     "tween.js": "sole/tween.js",
-    "dat-gui": "git://code.google.com/p/dat-gui.git"
+    "dat-gui": "git://code.google.com/p/dat-gui.git",
+    "ThreeCSG": "chandlerprall/ThreeCSG"
   }
 }

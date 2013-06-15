@@ -4,9 +4,8 @@
   FizzyText = function() {
     return {
       message: "dat.gui",
-      speed: 0.8,
-      displayOutline: false,
-      explode: function() {}
+      'Simulation speed': 0.8,
+      reset: function() {}
     };
   };
 
@@ -14,10 +13,9 @@
     var gui, text;
     text = new FizzyText();
     gui = new dat.GUI();
-    gui.add(text, "message");
-    gui.add(text, "speed", -5, 5);
-    gui.add(text, "displayOutline");
-    return gui.add(text, "explode");
+    gui.add(text, 'message');
+    gui.add(text, 'Simulation speed', -5, 5);
+    return gui.add(text, 'reset');
   };
 
   SCREEN_WIDTH = window.innerWidth;
@@ -83,7 +81,7 @@
   mlib = {};
 
   init = function() {
-    var addMorph, detailTexture, diffuseTexture1, diffuseTexture2, geometryTerrain, i, loader, material, morphColorsToFaceColors, normalShader, params, pars, plane, rx, ry, specularMap, startX, terrainShader, vertexShader;
+    var addMorph, detailTexture, diffuseTexture1, diffuseTexture2, geometryTerrain, i, loader, make, material, mod, morphColorsToFaceColors, normalShader, params, pars, plane, ring, rx, ry, specularMap, startX, terrainShader, vertexShader;
     addMorph = function(geometry, speed, duration, x, y, z) {
       var material, meshAnim;
       material = new THREE.MeshLambertMaterial({
@@ -121,7 +119,7 @@
     cameraOrtho = new THREE.OrthographicCamera(SCREEN_WIDTH / -2, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / -2, -10000, 10000);
     cameraOrtho.position.z = 100;
     sceneRenderTarget.add(cameraOrtho);
-    camera = new THREE.PerspectiveCamera(40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 4000);
+    camera = new THREE.PerspectiveCamera(40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 16000);
     camera.position.set(-1200, 800, 1200);
     controls = new THREE.TrackballControls(camera);
     controls.target.set(0, 0, 0);
@@ -134,7 +132,7 @@
     controls.dynamicDampingFactor = 0.15;
     controls.keys = [65, 83, 68];
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0xffffff, 2000, 4000);
+    scene.fog = new THREE.Fog(0xffffff, 2000, 8000);
     scene.add(new THREE.AmbientLight(0x111111));
     directionalLight = new THREE.DirectionalLight(0xffffff, 1.15);
     directionalLight.position.set(500, 2000, 0);
@@ -228,6 +226,60 @@
     terrain.rotation.x = -Math.PI / 2;
     terrain.visible = false;
     scene.add(terrain);
+    ring = {
+      geometry: new THREE.CubeGeometry(800, 100, 800)
+    };
+    ring.mesh = new THREE.Mesh(ring.geometry, new THREE.MeshLambertMaterial({
+      color: 0xeeeeee
+    }));
+    ring.mesh.position.set(0, -40, 0);
+    scene.add(ring.mesh);
+    make = function(node) {
+      var args, component, geom, one, pos, shape, _i, _len, _ref, _ref1, _ref2;
+      component = {};
+      one = node.shape.length === 1;
+      _ref = node.shape;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        shape = _ref[_i];
+        pos = shape[0], geom = shape[1], args = shape[2];
+        console.log("pos: " + pos + ", geom: " + geom + ", args: " + args);
+        if (geom === 'rect') {
+          shape.geometry = new THREE.CubeGeometry(args[0], args[1], args[2]);
+        } else if (geom === 'sphere') {
+          shape.geometry = new THREE.SphereGeometry(args, 32, 32);
+        }
+        if (one) {
+          shape.mesh = new THREE.Mesh(shape.geometry, new THREE.MeshBasicMaterial);
+          ({
+            color: (_ref1 = node.color) != null ? _ref1 : 0xee88ff
+          });
+        } else {
+          shape.mesh = new THREE.Mesh(shape.geometry);
+        }
+        shape.mesh.position.x = pos[0];
+        shape.mesh.position.y = pos[1];
+        shape.mesh.position.z = pos[2];
+        shape.bsp = new ThreeBSP(shape.mesh);
+        if (component.bsp != null) {
+          component.bsp = component.bsp.union(shape.bsp);
+        } else {
+          component.bsp = shape.bsp;
+          component.mesh = shape.mesh;
+          component.geometry = shape.geometry;
+        }
+      }
+      if (!one) {
+        component.mesh = component.bsp.toMesh(new THREE.MeshBasicMaterial({
+          color: (_ref2 = node.color) != null ? _ref2 : 0xee88ff,
+          transparent: true
+        }));
+      }
+      component.mesh.geometry.computeVertexNormals();
+      return component;
+    };
+    mod = make(MODEL.bone);
+    mod.mesh.visible = true;
+    scene.add(mod.mesh);
     renderer = new THREE.WebGLRenderer();
     renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
     renderer.setClearColor(scene.fog.color, 1);
@@ -246,18 +298,18 @@
     startX = -3000;
     loader.load("models/animated/parrot.js", function(geometry) {
       morphColorsToFaceColors(geometry);
-      addMorph(geometry, 250, 500, startX - 500, 500, 700);
-      addMorph(geometry, 250, 500, startX - Math.random() * 500, 500, -200);
-      addMorph(geometry, 250, 500, startX - Math.random() * 500, 500, 200);
-      return addMorph(geometry, 250, 500, startX - Math.random() * 500, 500, 1000);
+      addMorph(geometry, 250, 1000, startX - 500, 1000, 700);
+      addMorph(geometry, 250, 900, startX - Math.random() * 500, 1000, -200);
+      addMorph(geometry, 250, 600, startX - Math.random() * 500, 1500, 200);
+      return addMorph(geometry, 250, 800, startX - Math.random() * 500, 1200, 1000);
     });
     loader.load("models/animated/flamingo.js", function(geometry) {
       morphColorsToFaceColors(geometry);
-      return addMorph(geometry, 500, 1000, startX - Math.random() * 500, 350, 40);
+      return addMorph(geometry, 500, 1200, startX - Math.random() * 500, 1350, 40);
     });
     loader.load("models/animated/stork.js", function(geometry) {
       morphColorsToFaceColors(geometry);
-      return addMorph(geometry, 350, 1000, startX - Math.random() * 500, 350, 340);
+      return addMorph(geometry, 350, 1100, startX - Math.random() * 500, 1350, 340);
     });
     return renderer.initWebGLObjects(scene);
   };
